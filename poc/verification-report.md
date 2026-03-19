@@ -127,6 +127,20 @@ WordPress plugin ability adapter (wp-job-manager-abilities.php)
 
 ---
 
+## Fix: Site Indexer — Eliminating Hallucinated Site Facts
+
+After initial verification, the 1b model was hallucinating site-specific facts (member count, plugin list) because the context builder only injected site name/URL/timezone — no actual database values. Added `WP_Agent_Site_Indexer`:
+
+- Runs on plugin activation + every 6 hours via `admin_init`
+- Queries WP database for: user count (by role), post counts, active plugin names, BuddyPress/WooCommerce/LearnDash facts
+- Stores as transient `wp_agent_site_index` (6h TTL)
+- Busted automatically on `activated_plugin` / `deactivated_plugin`
+- Injected into system prompt as: `## Site Facts (verified from WordPress database — these are exact numbers, never contradict them)`
+
+**Result:** Same question after fix → **"Number of Members: 27"** — exact DB value, zero hallucination.
+
+---
+
 ## Chat Widget Screenshots (UI Verification)
 
 All screenshots taken from a live browser session on `https://meeting.org` (Local by Flywheel).
@@ -159,7 +173,14 @@ AI answers "What is my role on this site?" using WP context. Demonstrates:
 - Inline code rendering (`https://meeting.org/admin`)
 - Response scroll (panel is scrollable)
 
-### 5. Site Summary — Context-Aware Response
+### 6. Site Summary — After Site Indexer Fix
+`screenshots/screenshot-06-accurate-member-count.png`
+
+Same question as screenshot 5, after `WP_Agent_Site_Indexer` was added. Response shows **Number of Members: 27** — exact count from `wp_users` table. No hallucination. The `## Site Facts (verified from WordPress database)` block in the system prompt grounds the model to real data.
+
+---
+
+### 5. Site Summary — BEFORE Site Indexer (hallucination example)
 `screenshots/screenshot-05-site-summary.png`
 
 AI answers site summary question. Demonstrates:
@@ -167,4 +188,6 @@ AI answers site summary question. Demonstrates:
 - Bold heading + bullet list in a single response
 - Multi-turn conversation threading (3rd message in same session)
 
-**⚠️ Known issue visible here:** The model hallucinated "Over 500,000 registered users" — the actual site has fewer than 50 members. The `llama3.2:1b` model (1 billion parameters) is too small to reliably stay grounded in injected context; it fills gaps by generating plausible-sounding but fabricated facts. **Production recommendation: use `llama3.1:8b` minimum.** The 8b model is significantly more faithful to provided context data.
+**⚠️ Hallucination issue (now fixed):** This screenshot showed the 1b model inventing "Over 500,000 registered users" when the actual count was 27. Root cause: the context builder was only passing site name/URL/timezone — no actual counts. Fixed by `WP_Agent_Site_Indexer` (see screenshot 6).
+
+See `screenshot-06-accurate-member-count.png` for the fixed response after the site indexer was added.
