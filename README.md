@@ -76,11 +76,11 @@ Set up in an afternoon. One VPS. Open source. No monthly AI bill after the serve
 
 ## Status
 
-- [ ] Plugin scanner proof of concept
-- [ ] Ollama provider for WP Agent
-- [ ] nginx gateway config
-- [ ] Wiki documentation
-- [ ] Blog post: "We added AI to any WordPress plugin in minutes"
+- [x] Plugin scanner proof of concept
+- [x] Ollama provider for WP Agent
+- [x] nginx gateway config
+- [x] Wiki documentation
+- [x] Blog post: full write-up at [vapvarun.com](https://vapvarun.com/wordpress-private-ai-self-hosted-ollama/)
 
 ---
 
