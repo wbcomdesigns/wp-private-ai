@@ -1,0 +1,14 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Local plugin paths used during scanning
+*.local
+
+# Composer
+vendor/
+
+# Claude Code internal files — never commit to public repo
+docs/superpowers/
+.claude/
+CLAUDE.md
