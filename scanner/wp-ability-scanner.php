@@ -89,6 +89,9 @@ function derive_plugin_name( string $plugin_dir, string $slug ): string {
     // Try to find Plugin Name: header in top-level .php files
     foreach ( glob( $plugin_dir . '/*.php' ) ?: [] as $file ) {
         $header = file_get_contents( $file, false, null, 0, 8192 );
+        if ( $header === false ) {
+            continue;
+        }
         if ( preg_match( '/Plugin Name\s*:\s*(.+)/i', $header, $m ) ) {
             return trim( $m[1] );
         }
@@ -129,7 +132,7 @@ function resolve_http_methods( string $raw ): string {
  * Uses the first method when multiple are listed.
  */
 function http_methods_to_action( string $methods ): string {
-    $first = strtoupper( strtok( $methods, ', ' ) );
+    $first = strtoupper( explode( ',', str_replace( ' ', ',', $methods ) )[0] );
     return match ( $first ) {
         'GET'                   => 'get',
         'POST'                  => 'create',
@@ -151,7 +154,8 @@ function route_to_slug( string $route ): string {
     $slug = strtolower( trim( $slug, '/' ) );
     $slug = str_replace( '/', '-', $slug );
     $slug = preg_replace( '/-+/', '-', $slug );
-    return trim( $slug, '-' );
+    $slug = trim( $slug, '-' );
+    return $slug !== '' ? $slug : 'unknown';
 }
 
 /**
@@ -194,6 +198,10 @@ function extract_rest_routes( string $source ): array {
     // Pass 1: find call sites with their positions
     $pattern_call = '/register_rest_route\s*\(\s*([\'"])(?P<ns>[^\'"]+)\1\s*,\s*([\'"])(?P<route>[^\'"]+)\3\s*,/';
     if ( ! preg_match_all( $pattern_call, $clean, $calls, PREG_OFFSET_CAPTURE | PREG_SET_ORDER ) ) {
+        // Warn if register_rest_route() calls exist but use variables/constants/concatenation
+        if ( preg_match( '/register_rest_route\s*\(/', $clean ) ) {
+            fwrite( STDERR, "  [warn] register_rest_route() detected but namespace/route are not string literals — routes skipped.\n" );
+        }
         return $routes;
     }
 
@@ -347,6 +355,14 @@ function unique_ability_name( string $name, array &$used ): string {
 // ──────────────────────────────────────────────────────────────────────────────
 
 /**
+ * Escape a string for embedding inside a single-quoted PHP string literal.
+ * Only backslash and single-quote need escaping.
+ */
+function esc_single_quoted( string $s ): string {
+    return str_replace( [ '\\', "'" ], [ '\\\\', "\\'" ], $s );
+}
+
+/**
  * @param list<array{namespace:string, route:string, methods:string}> $routes
  * @param list<string>                                                 $cpts
  * @param list<array{class:string, method:string}>                     $crud_methods
@@ -403,7 +419,7 @@ function generate_adapter(
 
     // ── From CRUD methods ────────────────────────────────────────────────────
     foreach ( $crud_methods as $m ) {
-        $action       = strtolower( strtok( $m['method'], '_' ) );
+        $action       = strtolower( explode( '_', $m['method'] )[0] );
         $rest         = substr( $m['method'], strlen( $action ) + 1 );
         $resource     = sanitize_ability_component( str_replace( '_', '-', $rest ) );
         $raw_name     = $plugin_slug . '/' . $action . '-' . $resource;
@@ -435,8 +451,8 @@ function generate_adapter(
         $abilities_code .= render_ability( $ab, $plugin_slug, $plugin_name );
     }
 
-    $esc_slug = addslashes( $plugin_slug );
-    $esc_name = addslashes( $plugin_name );
+    $esc_slug = esc_single_quoted( $plugin_slug );
+    $esc_name = esc_single_quoted( $plugin_name );
 
     return <<<PHP
 <?php
@@ -518,12 +534,12 @@ SCHEMA,
  */
 function render_ability( array $ab, string $plugin_slug, string $plugin_name ): string {
     $ability_name = $ab['ability_name'];
-    $label        = addslashes( $ab['label'] );
-    $description  = addslashes( $ab['description'] );
-    $endpoint     = addslashes( $ab['endpoint'] );
+    $label        = esc_single_quoted( $ab['label'] );
+    $description  = esc_single_quoted( $ab['description'] );
+    $endpoint     = esc_single_quoted( $ab['endpoint'] );
     $schema_props = $ab['schema_props'];
-    $esc_slug     = addslashes( $plugin_slug );
-    $esc_name     = addslashes( $plugin_name );
+    $esc_slug     = esc_single_quoted( $plugin_slug );
+    $esc_name     = esc_single_quoted( $plugin_name );
 
     return <<<PHP
 
@@ -604,6 +620,11 @@ $date   = date( 'Y-m-d' );
 $output = generate_adapter( $plugin_slug, $plugin_name, $all_routes, $all_cpts, $all_methods, $date );
 
 if ( $output_file !== null ) {
+    $output_dir = dirname( $output_file );
+    if ( ! is_dir( $output_dir ) ) {
+        fwrite( STDERR, "Error: directory does not exist: {$output_dir}\n" );
+        exit( 1 );
+    }
     if ( file_put_contents( $output_file, $output ) === false ) {
         fwrite( STDERR, "Error: Could not write to {$output_file}\n" );
         exit( 1 );
