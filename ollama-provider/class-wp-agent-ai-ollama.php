@@ -292,8 +292,6 @@ class WP_Agent_AI_Ollama extends WP_Agent_AI_Provider {
 				'headers'  => $this->build_headers(),
 				'body'     => wp_json_encode($body),
 				'timeout'  => 120,
-				'stream'   => true,
-				'filename' => '',
 			]
 		);
 
