@@ -166,3 +166,5 @@ AI answers site summary question. Demonstrates:
 - User name recognition ("You are **Varun Dubey**") from WP session context
 - Bold heading + bullet list in a single response
 - Multi-turn conversation threading (3rd message in same session)
+
+**⚠️ Known issue visible here:** The model hallucinated "Over 500,000 registered users" — the actual site has fewer than 50 members. The `llama3.2:1b` model (1 billion parameters) is too small to reliably stay grounded in injected context; it fills gaps by generating plausible-sounding but fabricated facts. **Production recommendation: use `llama3.1:8b` minimum.** The 8b model is significantly more faithful to provided context data.
