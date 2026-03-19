@@ -124,3 +124,45 @@ WordPress plugin ability adapter (wp-job-manager-abilities.php)
 ```
 
 **Zero data left the server.** All inference ran locally inside the Docker container. No cloud API was contacted.
+
+---
+
+## Chat Widget Screenshots (UI Verification)
+
+All screenshots taken from a live browser session on `https://meeting.org` (Local by Flywheel).
+
+### 1. FAB Button — Closed State
+`screenshots/screenshot-01-fab-closed.png`
+
+Floating action button visible at bottom-right corner of the page. Site content is fully visible and unobstructed.
+
+### 2. Panel Open — Conversation in Progress
+`screenshots/screenshot-02-panel-open.png`
+
+Right-side panel open (380px wide, full viewport height). Demonstrates:
+- Slide-in animation from right edge
+- Header with title, New (+), History (☰), and Close (×) buttons
+- Markdown rendering: `### Active Plugins:` heading + bold text + bullet list
+- User message bubble (blue, right-aligned) vs assistant message (grey, left-aligned)
+
+### 3. New Conversation — Greeting Screen
+`screenshots/screenshot-03-greeting.png`
+
+Fresh conversation state with greeting icon and "Hi! How can I help you today?" message.
+
+### 4. Multi-Turn — Role & Permissions Response
+`screenshots/screenshot-04-role-response.png`
+
+AI answers "What is my role on this site?" using WP context. Demonstrates:
+- Numbered ordered list rendering
+- Bold inline text rendering
+- Inline code rendering (`https://meeting.org/admin`)
+- Response scroll (panel is scrollable)
+
+### 5. Site Summary — Context-Aware Response
+`screenshots/screenshot-05-site-summary.png`
+
+AI answers site summary question. Demonstrates:
+- User name recognition ("You are **Varun Dubey**") from WP session context
+- Bold heading + bullet list in a single response
+- Multi-turn conversation threading (3rd message in same session)
