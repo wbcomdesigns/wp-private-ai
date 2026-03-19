@@ -4,6 +4,8 @@
 
 Built on **WordPress Abilities API (WP 6.9+ core)** + **Ollama** (self-hosted LLM).
 
+**Blog post:** [How I Built a Private AI Assistant for WordPress That Never Sends Data to OpenAI](https://vapvarun.com/wordpress-private-ai-self-hosted-ollama/) — full write-up of how this was built, the hallucination problem and fix, multi-site deployment, and what comes next.
+
 ---
 
 ## What This Is
